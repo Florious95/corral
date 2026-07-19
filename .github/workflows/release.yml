@@ -27,7 +27,12 @@ jobs:
       - name: Scan release source
         run: |
           set -euo pipefail
-          if find . -path './.git' -prune -o -type f \( -name '*.apk' -o -name '*.aar' -o -name '*.so' -o -name '*.jar' -o -name '*.keystore' -o -name '*.jks' -o -name '*.pem' -o -name 'local.properties' -o -name 'corral-gateway' -o -path './gateway/gateway' \) -print | grep -q . && { echo 'Release-blocking binary or credential file found in source.' >&2; exit 1; } || true
+          matches=$(find . -path './.git' -prune -o -type f \( -name '*.apk' -o -name '*.aar' -o -name '*.so' -o -name '*.jar' -o -name '*.keystore' -o -name '*.jks' -o -name '*.pem' -o -name 'local.properties' -o -name 'corral-gateway' -o -path './gateway/gateway' \) -print)
+          if [ -n "$matches" ]; then
+            echo "Release-blocking binary or credential file found in source:" >&2
+            echo "$matches" >&2
+            exit 1
+          fi
           if grep -rInE 'tskey-auth-[0-9A-Za-z]{8,}CNTRL|-----BEGIN [A-Z ]*PRIVATE KEY-----' --exclude-dir=.git .; then
             echo 'Release-blocking credential material found.' >&2
             exit 1
