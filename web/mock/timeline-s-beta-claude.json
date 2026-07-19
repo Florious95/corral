@@ -1,0 +1,5 @@
+[
+  { "seq": 75000, "ts": "2026-07-14T03:10:01Z", "type": "tool_use", "tool": "Bash", "summary": "cargo test scanner", "input": "{\"command\":\"cargo test scanner\"}" },
+  { "seq": 76000, "ts": "2026-07-14T03:11:44Z", "type": "tool_result", "tool": "Bash", "ok": true, "output": "18 passed; 0 failed" },
+  { "seq": 77000, "ts": "2026-07-14T03:12:10Z", "type": "assistant_message", "text": "复现测试已通过，正在跑完整回归。" }
+]

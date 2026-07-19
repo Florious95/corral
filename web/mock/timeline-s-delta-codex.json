@@ -1,0 +1,3 @@
+[
+  { "seq": 31000, "ts": "2026-07-13T12:08:18Z", "type": "assistant_message", "text": "磁盘占用恢复正常，logrotate 配置已验证。" }
+]

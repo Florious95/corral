@@ -1,0 +1,20 @@
+# Build output
+/gateway/gateway
+/gateway/corral-gateway
+*.o
+web/dist/
+web/node_modules/
+*.tsbuildinfo
+
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aar
+*.jar
+
+# OS / editor
+.DS_Store
+*.swp

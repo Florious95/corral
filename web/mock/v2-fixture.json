@@ -1,0 +1,279 @@
+{
+  "snapshots": [
+    {
+      "revision": "rv1_mockpro_42",
+      "host": { "id": "host-alpha", "name": "Workstation Alpha" },
+      "entries": [
+        {
+          "entryId": "e1_AAAAAAAAAAAAAAAAAAAAAA",
+          "kind": "claude",
+          "cwd": "/Users/demo/Projects/sample-app",
+          "state": "running",
+          "canSend": true,
+          "model": "claude-opus",
+          "lastActivityAt": "2026-07-15T04:00:00Z",
+          "lastMessagePreview": "正在推进 v2 协议评估",
+          "attachmentRevision": 3,
+          "pane": { "paneId": "%0", "windowName": "sample-app-leader" },
+          "attachment": {
+            "recordId": "r-leader",
+            "sessionId": "00000000-0000-4000-8000-000000000006",
+            "title": "示例控制台 leader",
+            "status": "attached",
+            "attachmentRevision": 3
+          }
+        },
+        {
+          "entryId": "e1_BBBBBBBBBBBBBBBBBBBBBB",
+          "kind": "codex",
+          "cwd": "/Users/demo/Projects/sample-app",
+          "state": "unknown",
+          "canSend": true,
+          "model": "",
+          "lastActivityAt": "2026-07-15T03:55:00Z",
+          "lastMessagePreview": "",
+          "attachmentRevision": 0,
+          "pane": { "paneId": "%1", "windowName": "console" },
+          "attachment": null
+        },
+        {
+          "entryId": "e1_CCCCCCCCCCCCCCCCCCCCCC",
+          "kind": "claude",
+          "cwd": "/Users/demo/Projects/example-service",
+          "state": "waiting_input",
+          "canSend": true,
+          "model": "claude-opus",
+          "lastActivityAt": "2026-07-15T03:50:00Z",
+          "lastMessagePreview": "附着证据出现冲突",
+          "attachmentRevision": 2,
+          "pane": { "paneId": "%2", "windowName": "示例服务" },
+          "attachment": {
+            "recordId": "r-suspect",
+            "sessionId": "11111111-2222-4333-8444-555555555555",
+            "title": "示例服务",
+            "status": "suspect",
+            "attachmentRevision": 2,
+            "suspectReason": "evidence_conflict"
+          }
+        },
+        {
+          "entryId": "e1_DDDDDDDDDDDDDDDDDDDDDD",
+          "kind": "codex",
+          "cwd": "/Users/demo/Projects/sample-app",
+          "state": "idle",
+          "canSend": true,
+          "model": "gpt-5-codex",
+          "lastActivityAt": "2026-07-15T03:40:00Z",
+          "lastMessagePreview": "旧代际即将被替换",
+          "attachmentRevision": 1,
+          "pane": { "paneId": "%3", "windowName": "qa" },
+          "attachment": {
+            "recordId": "r-generation",
+            "sessionId": "22222222-3333-4444-8555-666666666666",
+            "title": "旧代际入口",
+            "status": "attached",
+            "attachmentRevision": 1
+          }
+        }
+      ],
+      "history": [
+        {
+          "recordId": "r-history",
+          "sessionId": "33333333-4444-4555-8666-777777777777",
+          "kind": "claude",
+          "cwd": "/Users/demo/Projects/sample-app",
+          "title": "昨天的历史讨论",
+          "model": "claude-opus",
+          "lastActivityAt": "2026-07-14T20:00:00Z",
+          "preview": "只读回放，不再对应终端入口"
+        },
+        {
+          "recordId": "r-new-attachment",
+          "sessionId": "44444444-5555-4666-8777-888888888888",
+          "kind": "codex",
+          "cwd": "/Users/demo/Projects/sample-app",
+          "title": "重新识别后的对话",
+          "model": "gpt-5-codex",
+          "lastActivityAt": "2026-07-15T03:00:00Z",
+          "preview": "等待附着到终端入口"
+        }
+      ]
+    },
+    {
+      "revision": "rv1_mockair_9",
+      "host": { "id": "host-beta", "name": "Laptop Beta" },
+      "entries": [
+        {
+          "entryId": "e1_EEEEEEEEEEEEEEEEEEEEEE",
+          "kind": "claude",
+          "cwd": "/Users/demo/Projects/notes",
+          "state": "idle",
+          "canSend": true,
+          "model": "claude-sonnet",
+          "lastActivityAt": "2026-07-15T03:30:00Z",
+          "lastMessagePreview": "Air 当前不可达但入口缓存保留",
+          "attachmentRevision": 1,
+          "pane": { "paneId": "%0", "windowName": "notes" },
+          "attachment": {
+            "recordId": "r-air",
+            "sessionId": "55555555-6666-4777-8888-999999999999",
+            "title": "Air 上的对话",
+            "status": "attached",
+            "attachmentRevision": 1
+          }
+        }
+      ],
+      "history": [
+        {
+          "recordId": "r-air-history",
+          "sessionId": "66666666-7777-4888-8999-000000000000",
+          "kind": "codex",
+          "cwd": "/Users/demo/Projects/notes",
+          "title": "Air 历史记录",
+          "model": "gpt-5-codex",
+          "lastActivityAt": "2026-07-13T10:00:00Z",
+          "preview": "跨主机历史仍独立保留"
+        }
+      ]
+    }
+  ],
+  "transport": {
+    "host-alpha": "reachable",
+    "host-beta": "unreachable"
+  },
+  "favoriteRecordIds": ["r-leader"],
+  "recordsById": {
+    "r-leader": {
+      "recordId": "r-leader",
+      "sessionId": "00000000-0000-4000-8000-000000000006",
+      "kind": "claude",
+      "cwd": "/Users/demo/Projects/sample-app",
+      "title": "示例控制台 leader",
+      "model": "claude-opus",
+      "lastActivityAt": "2026-07-15T04:00:00Z",
+      "preview": "入口退出后成为收藏历史"
+    },
+    "r-new-attachment": {
+      "recordId": "r-new-attachment",
+      "sessionId": "44444444-5555-4666-8777-888888888888",
+      "kind": "codex",
+      "cwd": "/Users/demo/Projects/sample-app",
+      "title": "重新识别后的对话",
+      "model": "gpt-5-codex",
+      "lastActivityAt": "2026-07-15T03:00:00Z",
+      "preview": "等待附着到终端入口"
+    }
+  },
+  "events": [
+    {
+      "event": "attachment_changed",
+      "data": {
+        "entryId": "e1_CCCCCCCCCCCCCCCCCCCCCC",
+        "previousRevision": "rv1_mockpro_42",
+        "revision": "rv1_mockpro_43",
+        "previousRecordId": "r-suspect",
+        "attachmentRevision": 3,
+        "attachment": {
+          "recordId": "r-new-attachment",
+          "sessionId": "44444444-5555-4666-8777-888888888888",
+          "title": "重新识别后的对话",
+          "status": "attached",
+          "attachmentRevision": 3
+        }
+      }
+    },
+    {
+      "event": "entry_removed",
+      "data": {
+        "entryId": "e1_AAAAAAAAAAAAAAAAAAAAAA",
+        "previousRevision": "rv1_mockpro_43",
+        "revision": "rv1_mockpro_44",
+        "reason": "process_exit"
+      }
+    },
+    {
+      "event": "entry_removed",
+      "data": {
+        "entryId": "e1_DDDDDDDDDDDDDDDDDDDDDD",
+        "previousRevision": "rv1_mockpro_44",
+        "revision": "rv1_mockpro_45",
+        "reason": "generation_replaced"
+      }
+    },
+    {
+      "event": "delivery",
+      "data": {
+        "entryId": "e1_BBBBBBBBBBBBBBBBBBBBBB",
+        "deliveryId": "d1_mock_delivery",
+        "clientNonce": "018f0000-0000-7000-8000-000000000001",
+        "status": "accepted",
+        "recordId": null
+      }
+    }
+  ],
+  "hostEvents": [
+    {
+      "event": "snapshot_changed",
+      "id": "rv1_mockpro_46",
+      "data": {
+        "previousRevision": "rv1_mockpro_45",
+        "revision": "rv1_mockpro_46"
+      }
+    },
+    {
+      "event": "snapshot_required",
+      "id": "rv1_mockpro_47",
+      "data": {
+        "previousRevision": "rv1_stale_client_12",
+        "revision": "rv1_mockpro_47"
+      }
+    }
+  ],
+  "replacementEntry": {
+    "entryId": "e1_ZZZZZZZZZZZZZZZZZZZZZZ",
+    "kind": "codex",
+    "cwd": "/Users/demo/Projects/sample-app",
+    "state": "running",
+    "canSend": true,
+    "model": "",
+    "lastActivityAt": "2026-07-15T04:10:00Z",
+    "lastMessagePreview": "",
+    "attachmentRevision": 0,
+    "pane": { "paneId": "%3", "windowName": "qa-new-generation" },
+    "attachment": null
+  },
+  "duplicateHistoryProbe": {
+    "recordId": "r-history",
+    "sessionId": "33333333-4444-4555-8666-777777777777",
+    "kind": "claude",
+    "cwd": "/Users/demo/Projects/sample-app",
+    "title": "重复历史探针（不应渲染）",
+    "model": "claude-opus",
+    "lastActivityAt": "2026-07-14T20:00:00Z",
+    "preview": "adapter 应按 hostId+recordId 去重"
+  },
+  "httpCases": [
+    {
+      "entryId": "e1_OLDGENERATION000000000",
+      "status": 410,
+      "body": {
+        "error": {
+          "code": "entry_generation_gone",
+          "message": "entry generation is gone",
+          "retryable": false
+        }
+      }
+    },
+    {
+      "entryId": "e1_UNKNOWNENTRY0000000000",
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "entry_not_found",
+          "message": "entry not found",
+          "retryable": false
+        }
+      }
+    }
+  ]
+}

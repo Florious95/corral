@@ -1,0 +1,4 @@
+[
+  { "seq": 9000, "ts": "2026-07-14T03:14:10Z", "type": "assistant_message", "text": "`/api/sessions` 是单机响应，但 mock 需要表达三台主机。" },
+  { "seq": 10000, "ts": "2026-07-14T03:15:24Z", "type": "status", "text": "等待确认 mock 多主机 fixture 的包装结构" }
+]

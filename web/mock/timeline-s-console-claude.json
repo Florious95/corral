@@ -1,0 +1,4 @@
+[
+  { "seq": 28000, "ts": "2026-07-14T02:56:17Z", "type": "user_message", "text": "锁定 fleet API v1。" },
+  { "seq": 29000, "ts": "2026-07-14T02:58:02Z", "type": "assistant_message", "text": "契约 v1 已锁定，等待 collector 实测。" }
+]
