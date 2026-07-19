@@ -31,10 +31,14 @@ On each machine you want to reach (needs [Tailscale](https://tailscale.com/downl
 
 ```bash
 git clone https://github.com/Florious95/corral && cd corral
-./scripts/corral-up.sh
+./scripts/corral-up.sh      # build + start the gateway, print its URL
+./scripts/corral-status.sh  # pid, listener, tsnet state, attached panes
+./scripts/corral-down.sh    # graceful stop (SIGTERM, state flushed)
 ```
 
-That builds and starts the gateway, exposes it on your tailnet, and prints the URL. Open it in any browser on any device in your tailnet, or install the Android app and enter a Tailscale auth key once — it embeds a userspace Tailscale node, so it doesn't take your phone's system VPN slot and works over cellular with no external client.
+`corral-up.sh` builds and starts the gateway, exposes it on your tailnet, and prints the URL. Open it in any browser on any device in your tailnet.
+
+For your phone, build the Android app from [`app/`](app/) (Flutter; see `app/build.sh`) — a prebuilt APK will be attached to Releases once signing is settled. On first launch, enter a Tailscale auth key in the app's settings; the key is stored encrypted on-device, never compiled into the APK. The app embeds a userspace Tailscale node, so it doesn't take your phone's system VPN slot and works over cellular with no external client.
 
 Dev mode without Tailscale: `TSNET_DISABLE=1 ./scripts/corral-up.sh` serves on `localhost:8787`.
 

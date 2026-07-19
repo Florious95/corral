@@ -69,6 +69,17 @@ func (store *closedSessionStore) add(sessionID string) error {
 	return nil
 }
 
+func (store *closedSessionStore) flush() error {
+	store.mu.RLock()
+	ids := make([]string, 0, len(store.ids))
+	for id := range store.ids {
+		ids = append(ids, id)
+	}
+	store.mu.RUnlock()
+	sort.Strings(ids)
+	return store.persist(ids)
+}
+
 func (store *closedSessionStore) persist(ids []string) error {
 	if store.path == "" {
 		return fmt.Errorf("closed session state path is empty")

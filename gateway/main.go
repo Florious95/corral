@@ -10,14 +10,32 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"tailscale.com/tsnet"
 )
 
-var tsServer *tsnet.Server
+var (
+	tsServer   *tsnet.Server
+	tsServerMu sync.RWMutex
+)
+
+func currentTSNetServer() *tsnet.Server {
+	tsServerMu.RLock()
+	defer tsServerMu.RUnlock()
+	return tsServer
+}
+
+func setTSNetServer(server *tsnet.Server) {
+	tsServerMu.Lock()
+	tsServer = server
+	tsServerMu.Unlock()
+}
 
 type NetworkSelf struct {
 	Hostname   string   `json:"hostname"`
@@ -63,7 +81,8 @@ func handleNetwork(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	if tsServer == nil {
+	server := currentTSNetServer()
+	if server == nil {
 		if response, ok := networkViaLocalTailscale(); ok {
 			writeJSON(w, http.StatusOK, response)
 			return
@@ -76,7 +95,7 @@ func handleNetwork(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	lc, err := tsServer.LocalClient()
+	lc, err := server.LocalClient()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "LocalClient: " + err.Error()})
 		return
@@ -321,7 +340,7 @@ func setStaticCacheHeader(w http.ResponseWriter, path string) {
 
 func filepathJoin(dir, name string) string { return strings.TrimRight(dir, "/") + "/" + name }
 
-func startTSNet(handler http.Handler) {
+func startTSNet(handler http.Handler) *tsnet.Server {
 	hostname := os.Getenv("RC_HOSTNAME")
 	if hostname == "" {
 		hostname = strings.ToLower(strings.ReplaceAll(hostnameOrEmpty(), " ", "-")) + "-rc"
@@ -331,21 +350,35 @@ func startTSNet(handler http.Handler) {
 		AuthKey:  os.Getenv("TS_AUTHKEY"),
 		Logf:     func(format string, args ...any) { log.Printf("tsnet: "+format, args...) },
 	}
+	setTSNetServer(server)
 	go func() {
 		listener, err := server.Listen("tcp", ":8787")
 		if err != nil {
 			log.Printf("tsnet: Listen failed: %v", err)
+			if currentTSNetServer() == server {
+				setTSNetServer(nil)
+			}
 			return
 		}
-		tsServer = server
 		log.Printf("tsnet: registered as %s", hostname)
-		if err := http.Serve(listener, handler); err != nil {
+		if err := http.Serve(listener, handler); err != nil && err != net.ErrClosed {
 			log.Printf("tsnet: Serve exit: %v", err)
 		}
 	}()
+	return server
 }
 
-func main() {
+func gracefulHTTPShutdown(server *http.Server, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		_ = server.Close()
+		return err
+	}
+	return nil
+}
+
+func runGateway(ctx context.Context) error {
 	addr := os.Getenv("GATEWAY_ADDR")
 	if addr == "" {
 		addr = "0.0.0.0:8787"
@@ -359,8 +392,11 @@ func main() {
 	mux.HandleFunc("/api/sessions/", withCORS(sessionsRouter))
 	mux.HandleFunc("/api/session-truth", withCORS(handleSessionTruth))
 	registerV2Routes(mux, v2Entries, loadV2RecordTimeline)
-	if _, err := startV2EventEngine(context.Background(), v2Entries); err != nil {
-		log.Fatalf("v2 event engine: %v", err)
+	engineCtx, cancelEngine := context.WithCancel(context.Background())
+	engine, err := startV2EventEngine(engineCtx, v2Entries)
+	if err != nil {
+		cancelEngine()
+		return err
 	}
 	if dir := staticDir(); dir != "" {
 		mux.Handle("/", spaHandler(dir))
@@ -369,13 +405,70 @@ func main() {
 		log.Printf("static: API-only mode")
 	}
 	handler := gzipMiddleware(mux)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		cancelEngine()
+		engine.Stop()
+		return err
+	}
+	server := &http.Server{Handler: handler}
+	var embedded *tsnet.Server
 	if os.Getenv("TSNET_DISABLE") != "1" {
-		startTSNet(handler)
+		embedded = startTSNet(handler)
 	} else {
 		log.Printf("tsnet: disabled by TSNET_DISABLE=1")
 	}
 	log.Printf("gateway listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, handler))
+	serveErr := make(chan error, 1)
+	go func() { serveErr <- server.Serve(listener) }()
+
+	select {
+	case err := <-serveErr:
+		cancelEngine()
+		engine.Stop()
+		if embedded != nil {
+			_ = embedded.Close()
+			setTSNetServer(nil)
+		}
+		if err == http.ErrServerClosed {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		log.Printf("shutdown: signal received")
+	}
+
+	if err := gracefulHTTPShutdown(server, 5*time.Second); err != nil {
+		log.Printf("shutdown: HTTP forced closed after timeout: %v", err)
+	}
+	if embedded != nil {
+		if err := embedded.Close(); err != nil {
+			log.Printf("shutdown: tsnet close failed: %v", err)
+		}
+		setTSNetServer(nil)
+	}
+	cancelEngine()
+	engine.Stop()
+	waitCtx, cancelWait := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := engine.Wait(waitCtx); err != nil {
+		log.Printf("shutdown: event engine stop timed out: %v", err)
+	}
+	cancelWait()
+	weakBindings.flush()
+	if err := closedSessions.flush(); err != nil {
+		log.Printf("shutdown: closed session state flush failed: %v", err)
+	}
+	log.Printf("shutdown: complete")
+	return nil
+}
+
+func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := runGateway(ctx); err != nil {
+		log.Printf("gateway: %v", err)
+		os.Exit(1)
+	}
 }
 
 func v2EventEngineBackgroundEnabled() bool {

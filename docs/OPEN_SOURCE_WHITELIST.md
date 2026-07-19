@@ -7,8 +7,9 @@ This directory was assembled from a positive whitelist. It was not produced by d
 - `gateway/*.go`, including tests.
 - `gateway/go.mod`, `gateway/go.sum`, and the CGo FSEvents bridge: `v2_fsevents_darwin.c` and `v2_fsevents_darwin.h`.
 - `web/src/**`, `web/mock/**`, and the Web build manifests (`package*.json`, TypeScript configs, Vite config, linter config, and `index.html`).
-- Android source and build manifests, including the Go source for `android/tsnet-wrapper`.
-- User-facing scripts only: `scripts/corral-up.sh`, `scripts/publish-web-dist.sh`, and `scripts/README.md`.
+- The Flutter Android app under `app/`: Dart sources and tests, pubspec files,
+  Android host sources and manifests, Gradle text files, and user-facing build script.
+- User-facing scripts only: `scripts/corral-up.sh`, `scripts/corral-status.sh`, `scripts/corral-down.sh`, `scripts/publish-web-dist.sh`, and `scripts/README.md`.
 - Open-source preparation notes under `docs/`.
 
 ## Excluded
@@ -16,11 +17,12 @@ This directory was assembled from a positive whitelist. It was not produced by d
 - Credentials and private runtime state: the private SSH credential file, `.team/`, `.claude/`, and `local.properties`.
 - Internal acceptance assets: every `scripts/qa-*`, `qa/`, `reports/`, and `Docs/QA/evidence/` path.
 - Generated Web output: `web/dist/` and `web/artifacts/`.
-- Generated Android output: every `build/` directory.
+- Generated Flutter and Android output: `.dart_tool/`, `.flutter-plugins-dependencies`,
+  every `build/` or `.gradle/` directory, and `local.properties`.
 - Executables and archives: `gateway/gateway*`, `*.apk`, `*.aar`, `*.jar`, `*.class`, and build cache `*.bin` files.
 - OS metadata such as `.DS_Store`.
 
-The Gradle wrapper JAR is intentionally absent because binary JAR files are outside the whitelist. Contributors can use an installed Gradle or regenerate the wrapper from a reviewed distribution.
+The Gradle wrapper JAR is intentionally absent because binary JAR files are outside the whitelist. Contributors can use Flutter tooling or regenerate the wrapper from a reviewed distribution.
 
 ## Sanitized test constants
 

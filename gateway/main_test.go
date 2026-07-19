@@ -4,13 +4,40 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestGracefulHTTPShutdownReleasesListener(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	address := listener.Addr().String()
+	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})}
+	served := make(chan error, 1)
+	go func() { served <- server.Serve(listener) }()
+
+	if err := gracefulHTTPShutdown(server, time.Second); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-served; err != nil && err != http.ErrServerClosed {
+		t.Fatalf("Serve returned %v", err)
+	}
+	rebound, err := net.Listen("tcp", address)
+	if err != nil {
+		t.Fatalf("listener was not released: %v", err)
+	}
+	_ = rebound.Close()
+}
 
 func TestGzipMiddlewareCompressesJSONOnlyWhenRequestedAndNeverSSE(t *testing.T) {
 	jsonHandler := gzipMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

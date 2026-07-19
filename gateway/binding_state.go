@@ -573,6 +573,12 @@ func (tracker *weakBindingTracker) hintKeys() map[string]bool {
 	return hints
 }
 
+func (tracker *weakBindingTracker) flush() {
+	tracker.mu.Lock()
+	defer tracker.mu.Unlock()
+	tracker.persistLocked()
+}
+
 func (tracker *weakBindingTracker) persistLocked() {
 	if tracker.path == "" {
 		return

@@ -68,6 +68,8 @@ type v2EventEngineConfig struct {
 type v2EventEngine struct {
 	config          v2EventEngineConfig
 	startOnce       sync.Once
+	stopOnce        sync.Once
+	done            chan struct{}
 	inspection      liveInspection
 	paneGeneration  uint64
 	snapshotMu      sync.Mutex
@@ -97,7 +99,7 @@ func newV2EventEngine(config v2EventEngineConfig) *v2EventEngine {
 	if config.ClassifyPane == nil {
 		config.ClassifyPane = targetedPaneAgent
 	}
-	return &v2EventEngine{config: config}
+	return &v2EventEngine{config: config, done: make(chan struct{})}
 }
 
 func (engine *v2EventEngine) Start(ctx context.Context) {
@@ -105,12 +107,15 @@ func (engine *v2EventEngine) Start(ctx context.Context) {
 }
 
 func (engine *v2EventEngine) run(ctx context.Context) {
-	defer engine.config.PathWatcher.Close()
-	defer engine.config.ProcessWatcher.Close()
-	if engine.config.SocketWatcher != nil {
-		defer engine.config.SocketWatcher.Close()
+	defer close(engine.done)
+	defer engine.stopWatchers()
+	inspection := engine.config.Inspect()
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		engine.applyPaneInspection(inspection, "pane_gone")
 	}
-	engine.refreshPanes("pane_gone")
 	if !v2EventEngineBackgroundEnabled() {
 		log.Printf("v2 event engine: background disabled by V2_EVENT_ENGINE_DISABLE=1 after initial snapshot")
 		return
@@ -200,6 +205,27 @@ func (engine *v2EventEngine) run(ctx context.Context) {
 				}
 			}(generation)
 		}
+	}
+}
+
+func (engine *v2EventEngine) stopWatchers() {
+	engine.stopOnce.Do(func() {
+		_ = engine.config.PathWatcher.Close()
+		_ = engine.config.ProcessWatcher.Close()
+		if engine.config.SocketWatcher != nil {
+			_ = engine.config.SocketWatcher.Close()
+		}
+	})
+}
+
+func (engine *v2EventEngine) Stop() { engine.stopWatchers() }
+
+func (engine *v2EventEngine) Wait(ctx context.Context) error {
+	select {
+	case <-engine.done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
