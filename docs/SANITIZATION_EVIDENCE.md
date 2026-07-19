@@ -41,6 +41,10 @@ web: npm run build                            PASS
 web: npm run lint                             PASS
 app: flutter analyze                          PASS (No issues found)
 app: flutter test                             PASS (42 tests)
+cli: node --test                              PASS (4 tests)
+cli: npm pack source/binary whitelist         PASS (10 files, 0 binaries)
+workflow: actionlint 1.7.7                     PASS
+release: three gateway target builds          PASS
 mock JSON parse                               PASS
 mock session-to-timeline links                PASS
 shell syntax                                  PASS
@@ -50,6 +54,9 @@ gateway lifecycle on 127.0.0.1:18799          PASS
 The lifecycle probe used `TSNET_DISABLE=1` and isolated pid, log, and state
 paths. It verified `up -> health -> status -> down`, repeated up/down behavior,
 SIGTERM exit code 0, state flushes, pidfile removal, and listener release.
+The installed-package CLI probe used the same isolated lifecycle through the
+actual npm tarball. The three release build commands produced Darwin arm64,
+Darwin amd64, and Linux amd64 executables only outside the repository.
 
 `web/node_modules`, `web/dist`, Flutter `.dart_tool`, Android `.gradle`, all
 build output, generated plugin files, and locally built gateway executables

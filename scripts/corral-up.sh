@@ -13,7 +13,7 @@ case "$PROBE_HOST" in
     0.0.0.0 | "" | "[::]" | ::) PROBE_HOST=127.0.0.1 ;;
 esac
 HEALTH_URL="http://${PROBE_HOST}:${PORT}/api/health"
-BINARY="$ROOT/gateway/corral-gateway"
+BINARY=${CORRAL_GATEWAY_BIN:-"$ROOT/gateway/corral-gateway"}
 
 mkdir -p "$STATE_DIR"
 chmod 700 "$STATE_DIR"
@@ -55,11 +55,19 @@ else
     echo "tmux is not installed; the gateway cannot discover panes."
 fi
 
-echo "Building gateway..."
-(cd "$ROOT/gateway" && GOPROXY=${GOPROXY:-https://proxy.golang.org,direct} go build -o "$BINARY" .) >"$BUILD_LOG" 2>&1 || {
-    echo "Gateway build failed; see $BUILD_LOG." >&2
-    exit 1
-}
+if [[ -n ${CORRAL_GATEWAY_BIN:-} ]]; then
+    if [[ ! -x "$BINARY" ]]; then
+        echo "Prebuilt gateway is missing or not executable: $BINARY" >&2
+        exit 1
+    fi
+    echo "Using prebuilt gateway: $BINARY"
+else
+    echo "Building gateway..."
+    (cd "$ROOT/gateway" && GOPROXY=${GOPROXY:-https://proxy.golang.org,direct} go build -o "$BINARY" .) >"$BUILD_LOG" 2>&1 || {
+        echo "Gateway build failed; see $BUILD_LOG." >&2
+        exit 1
+    }
+fi
 
 echo "Starting gateway on $ADDR..."
 nohup "$BINARY" >"$LOG_FILE" 2>&1 &

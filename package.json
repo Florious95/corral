@@ -1,0 +1,35 @@
+{
+  "name": "@florious95/corral",
+  "version": "0.1.0",
+  "description": "Self-hosted mobile control plane for coding-agent CLIs",
+  "license": "MIT",
+  "homepage": "https://github.com/Florious95/corral",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Florious95/corral.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "corral": "cli/bin/corral.js"
+  },
+  "scripts": {
+    "postinstall": "node cli/postinstall.js",
+    "test": "node --test cli/test/*.test.js"
+  },
+  "files": [
+    "cli/bin/corral.js",
+    "cli/lib/platform.js",
+    "cli/postinstall.js",
+    "scripts/corral-up.sh",
+    "scripts/corral-down.sh",
+    "scripts/corral-status.sh",
+    "scripts/README.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

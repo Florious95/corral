@@ -5,6 +5,8 @@
 web/dist/
 web/node_modules/
 *.tsbuildinfo
+cli/vendor/
+cli/.vendor-staging-*/
 
 # Android
 android/local.properties

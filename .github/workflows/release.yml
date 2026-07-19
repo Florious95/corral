@@ -1,0 +1,166 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Require tag to match package version
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./package.json').version")"
+      - name: Scan release source
+        run: |
+          set -euo pipefail
+          if find . -path './.git' -prune -o -type f \( -name '*.apk' -o -name '*.aar' -o -name '*.so' -o -name '*.jar' -o -name '*.keystore' -o -name '*.jks' -o -name '*.pem' -o -name 'local.properties' -o -name 'corral-gateway' -o -path './gateway/gateway' \) -print | grep -q . && { echo 'Release-blocking binary or credential file found in source.' >&2; exit 1; } || true
+          if grep -rInE 'tskey-auth-[0-9A-Za-z]{8,}CNTRL|-----BEGIN [A-Z ]*PRIVATE KEY-----' --exclude-dir=.git .; then
+            echo 'Release-blocking credential material found.' >&2
+            exit 1
+          fi
+      - name: Verify CLI
+        run: |
+          npm test
+          npm pack --dry-run
+      - name: Verify gateway
+        working-directory: gateway
+        run: |
+          go test -count=1 ./...
+          go vet ./...
+      - name: Verify Web
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+  web:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - working-directory: web
+        run: |
+          npm ci
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          if-no-files-found: error
+
+  gateway:
+    needs: [verify, web]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-14
+            goos: darwin
+            goarch: arm64
+            cgo: '1'
+            cc: clang -arch arm64
+          - target: darwin-amd64
+            runner: macos-14
+            goos: darwin
+            goarch: amd64
+            cgo: '1'
+            cc: clang -arch x86_64
+          - target: linux-amd64
+            runner: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            cgo: '0'
+            cc: ''
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web-dist
+      - name: Build versioned release archive
+        env:
+          TARGET: ${{ matrix.target }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: ${{ matrix.cgo }}
+          CC: ${{ matrix.cc }}
+        run: |
+          set -euo pipefail
+          version=${GITHUB_REF_NAME#v}
+          stage="$RUNNER_TEMP/corral-stage"
+          release="$GITHUB_WORKSPACE/release"
+          rm -rf "$stage" "$release"
+          mkdir -p "$stage/web/dist" "$release"
+          (cd gateway && go build -trimpath -ldflags='-s -w' -o "$stage/corral-gateway" .)
+          cp -R web-dist/. "$stage/web/dist/"
+          printf '%s\n' "$version" > "$stage/VERSION"
+          asset="corral-${GITHUB_REF_NAME}-${TARGET}.tar.gz"
+          tar -C "$stage" -czf "$release/$asset" .
+          digest=$(node -e "const fs=require('fs'),c=require('crypto');const h=c.createHash('sha256');h.update(fs.readFileSync(process.argv[1]));console.log(h.digest('hex'))" "$release/$asset")
+          printf '%s  %s\n' "$digest" "$asset" > "$release/$asset.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: release/*
+          if-no-files-found: error
+
+  publish:
+    needs: gateway
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub Release $GITHUB_REF_NAME already exists; keeping its versioned assets."
+          else
+            gh release create "$GITHUB_REF_NAME" release/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Publish npm package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [[ -z "$NODE_AUTH_TOKEN" ]]; then
+            echo 'NPM_TOKEN is not configured; GitHub Release was created but npm publish is pending.' >&2
+            exit 0
+          fi
+          npm publish --access public

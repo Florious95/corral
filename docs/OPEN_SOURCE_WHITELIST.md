@@ -10,6 +10,8 @@ This directory was assembled from a positive whitelist. It was not produced by d
 - The Flutter Android app under `app/`: Dart sources and tests, pubspec files,
   Android host sources and manifests, Gradle text files, and user-facing build script.
 - User-facing scripts only: `scripts/corral-up.sh`, `scripts/corral-status.sh`, `scripts/corral-down.sh`, `scripts/publish-web-dist.sh`, and `scripts/README.md`.
+- The `@florious95/corral` npm manifest, `cli/` JavaScript sources and tests,
+  and the tag-triggered release workflow under `.github/workflows/`.
 - Open-source preparation notes under `docs/`.
 
 ## Excluded
@@ -20,6 +22,8 @@ This directory was assembled from a positive whitelist. It was not produced by d
 - Generated Flutter and Android output: `.dart_tool/`, `.flutter-plugins-dependencies`,
   every `build/` or `.gradle/` directory, and `local.properties`.
 - Executables and archives: `gateway/gateway*`, `*.apk`, `*.aar`, `*.jar`, `*.class`, and build cache `*.bin` files.
+- Downloaded or generated package assets: `cli/vendor/`, release tarballs and
+  checksums, and npm package archives.
 - OS metadata such as `.DS_Store`.
 
 The Gradle wrapper JAR is intentionally absent because binary JAR files are outside the whitelist. Contributors can use Flutter tooling or regenerate the wrapper from a reviewed distribution.
@@ -39,4 +43,6 @@ The copied scripts are end-user helpers. Private QA scripts were not generalized
 
 Remote Web publishing has no default host or credential. Set `RC_SSH_HOST`, optional `RC_CREDENTIAL_FILE`, `RC_TARGET_URL`, and optional destination variables explicitly. Local publishing remains the no-configuration default.
 
-The names `corral`, `@florious95/cli`, and the `Florious95` repository owner are reserved for the CLI/repository packaging pass. This extraction includes the gateway, Web, and Android source; it does not invent a CLI implementation that is not present in the source workspace.
+The npm command is `corral`, the package is `@florious95/corral`, and release
+assets are downloaded from the matching version tag in the `Florious95/corral`
+repository.
