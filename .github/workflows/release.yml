@@ -41,17 +41,28 @@ jobs:
         run: |
           npm test
           npm pack --dry-run
-      - name: Verify gateway
-        working-directory: gateway
-        run: |
-          go test -count=1 ./...
-          go vet ./...
       - name: Verify Web
         working-directory: web
         run: |
           npm ci
           npm run lint
           npm run build
+
+  verify-gateway:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
+      - name: Install tmux
+        run: brew install tmux
+      - name: Verify gateway
+        working-directory: gateway
+        run: |
+          go test -count=1 ./...
+          go vet ./...
 
   web:
     needs: verify
@@ -74,7 +85,7 @@ jobs:
           if-no-files-found: error
 
   gateway:
-    needs: [verify, web]
+    needs: [verify, verify-gateway, web]
     strategy:
       fail-fast: false
       matrix:
