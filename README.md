@@ -38,7 +38,7 @@ git clone https://github.com/Florious95/corral && cd corral
 
 `corral-up.sh` builds and starts the gateway, exposes it on your tailnet, and prints the URL. Open it in any browser on any device in your tailnet.
 
-For your phone, build the Android app from [`app/`](app/) (Flutter; see `app/build.sh`) — a prebuilt APK will be attached to Releases once signing is settled. On first launch, enter a Tailscale auth key in the app's settings; the key is stored encrypted on-device, never compiled into the APK. The app embeds a userspace Tailscale node, so it doesn't take your phone's system VPN slot and works over cellular with no external client.
+For your phone, grab the prebuilt APK from [Releases](https://github.com/Florious95/corral/releases) (arm64, debug-signed for now) or build it yourself from [`app/`](app/) (Flutter; see `app/build.sh`). On first launch, enter a Tailscale auth key in the app's settings; the key is stored encrypted on-device, never compiled into the APK. The app embeds a userspace Tailscale node, so it doesn't take your phone's system VPN slot and works over cellular with no external client.
 
 Dev mode without Tailscale: `TSNET_DISABLE=1 ./scripts/corral-up.sh` serves on `localhost:8787`.
 
